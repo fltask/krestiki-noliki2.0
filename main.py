@@ -3,71 +3,102 @@ from tkinter import messagebox
 
 window = tk.Tk()
 window.title("Крестики-нолики")
-# Увеличиваем высоту окна, чтобы появилась кнопка сброса снизу
-window.geometry("300x400")
+window.geometry("320x480")
+window.resizable(False, False)
+window.configure(bg="#f0f0f0")  # Светлый фон окна
 
 current_player = "X"
 buttons = []
 
+# Заголовок игры
+title_label = tk.Label(window, text="Крестики-нолики", font=("Helvetica", 20, "bold"),
+                       bg="#f0f0f0", fg="#333333")
+title_label.pack(pady=10)
+
+# Фрейм для игрового поля
+grid_frame = tk.Frame(window, bg="#f0f0f0")
+grid_frame.pack()
+
+# Метка состояния игры (кто ходит, победитель, ничья и т.д.)
+status_label = tk.Label(window, text="Ходит игрок X", font=("Helvetica", 14),
+                        bg="#f0f0f0", fg="#555555")
+status_label.pack(pady=5)
+
+
 def reset_game():
     global current_player
-    current_player = "X"  # начинаем с игрока "X"
-    # Проходим по всем кнопкам и очищаем их содержимое, а также возвращаем стандартный вид
+    current_player = "X"
+    status_label.config(text="Ходит игрок X")
+    # Очищаем все кнопки и возвращаем им исходный вид
     for row in buttons:
         for btn in row:
-            btn.config(text="", bg="SystemButtonFace", state=tk.NORMAL)
+            btn.config(text="", bg="#ffffff", state=tk.NORMAL)
+
 
 def check_winner():
-    # Проверка строк и столбцов
+    # Проверяем строки и столбцы
     for i in range(3):
         if buttons[i][0]["text"] == buttons[i][1]["text"] == buttons[i][2]["text"] != "":
-            return True
+            return buttons[i][0]["text"]
         if buttons[0][i]["text"] == buttons[1][i]["text"] == buttons[2][i]["text"] != "":
-            return True
-    # Проверка диагоналей
+            return buttons[0][i]["text"]
+    # Проверяем диагонали
     if buttons[0][0]["text"] == buttons[1][1]["text"] == buttons[2][2]["text"] != "":
-        return True
+        return buttons[0][0]["text"]
     if buttons[0][2]["text"] == buttons[1][1]["text"] == buttons[2][0]["text"] != "":
-        return True
-    return False
+        return buttons[0][2]["text"]
+    return None
+
 
 def on_click(row, col):
     global current_player
 
-    # Если клетка уже заполнена, выходим из функции
-    if buttons[row][col]['text'] != "":
+    # Если клетка уже занята, выходим из функции
+    if buttons[row][col]["text"] != "":
         return
 
-    buttons[row][col]['text'] = current_player
+    # Отрисовка хода с различием по цвету для каждого игрока
+    if current_player == "X":
+        buttons[row][col].config(text="X", fg="#1E90FF")
+    else:
+        buttons[row][col].config(text="0", fg="#32CD32")
 
-    if check_winner():
-        messagebox.showinfo("Игра окончена", f"Игрок {current_player} победил!")
-        # После победы можно отключить все кнопки
+    # Проверяем наличие победителя
+    winner = check_winner()
+    if winner:
+        messagebox.showinfo("Игра окончена", f"Игрок {winner} победил!")
+        status_label.config(text=f"Победитель: {winner}")
+        # Деактивируем игровое поле после победы
         for r in buttons:
             for btn in r:
                 btn.config(state=tk.DISABLED)
         return
 
-    # Проверка на ничью: если все кнопки заполнены и победителя нет
+    # Проверяем ничью
     if all(btn["text"] != "" for row in buttons for btn in row):
         messagebox.showinfo("Игра окончена", "Ничья!")
+        status_label.config(text="Ничья!")
         return
 
-    # Смена игрока
+    # Переключаем игрока
     current_player = "0" if current_player == "X" else "X"
+    status_label.config(text=f"Ходит игрок {current_player}")
 
-# Создаем игровое поле из 3х3 кнопок
+
+# Создаем игровое поле (3х3 кнопок)
 for i in range(3):
-    row = []
+    row_buttons = []
     for j in range(3):
-        btn = tk.Button(window, text="", font=("Arial", 20), width=5, height=2,
+        btn = tk.Button(grid_frame, text="", font=("Helvetica", 24, "bold"),
+                        width=4, height=2, bg="#ffffff", relief="raised", bd=3,
                         command=lambda r=i, c=j: on_click(r, c))
-        btn.grid(row=i, column=j)
-        row.append(btn)
-    buttons.append(row)
+        btn.grid(row=i, column=j, padx=5, pady=5)
+        row_buttons.append(btn)
+    buttons.append(row_buttons)
 
-# Добавление кнопки сброса внизу игрового поля
-reset_button = tk.Button(window, text="Сбросить игру", font=("Arial", 14), command=reset_game)
-reset_button.grid(row=3, column=0, columnspan=3, pady=10)
+# Кнопка для начала новой игры
+reset_button = tk.Button(window, text="Новая игра", font=("Helvetica", 14),
+                         bg="#FFDEAD", fg="#8B4513", command=reset_game)
+reset_button.pack(pady=10)
 
 window.mainloop()
